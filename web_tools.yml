@@ -1,0 +1,38 @@
+---
+- name: Configure Docker, kubectl, and Jenkins
+  hosts: all
+  become: true
+
+  roles:
+    - docker
+    - kubectl
+    - jenkins
+
+  tasks:
+    - name: Verify Docker installation
+      ansible.builtin.command: docker --version
+      register: docker_version
+      ignore_errors: true
+
+    - name: Show Docker version
+      ansible.builtin.debug:
+        var: docker_version.stdout
+
+    - name: Verify kubectl installation
+      ansible.builtin.command: kubectl version --client --short
+      register: kubectl_version
+      ignore_errors: true
+
+    - name: Show kubectl version
+      ansible.builtin.debug:
+        var: kubectl_version.stdout
+
+    - name: Verify Jenkins service
+      ansible.builtin.shell: systemctl is-active jenkins
+      register: jenkins_status
+      ignore_errors: true
+
+    - name: Show Jenkins service status
+      ansible.builtin.debug:
+        msg: "Jenkins service is {{ jenkins_status.stdout | default('not running') }}"
+

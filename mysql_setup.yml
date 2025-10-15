@@ -1,0 +1,44 @@
+---
+- name: Secure MySQL setup with Vault
+  hosts: all
+  become: yes
+  vars_files:
+    - vault.yml
+
+  tasks:
+    - name: Install MySQL server and client
+      dnf:
+        name:
+          - mysql-server
+          - mysql
+        state: present
+
+    - name: Ensure MySQL service is running
+      service:
+        name: mysqld
+        state: started
+        enabled: true
+
+    - name: Create database
+      community.mysql.mysql_db:
+        name: "{{ db_name }}"
+        state: present
+
+    - name: Create user with privileges on database
+      community.mysql.mysql_user:
+        login_user: root
+        login_password: ""
+        name: "{{ db_user }}"
+        password: "{{ db_password }}"
+        priv: "{{ db_name }}.*:ALL"
+        host: "%"
+        state: present
+
+    - name: Verify DB by listing databases
+      shell: mysql -u {{ db_user }} -p'{{ db_password }}' -e "SHOW DATABASES;"
+      register: db_output
+
+    - name: Show DB verification output
+      debug:
+        var: db_output.stdout
+

@@ -1,0 +1,28 @@
+---
+- name: Ensure /usr/local/bin exists
+  become: true
+  ansible.builtin.file:
+    path: /usr/local/bin
+    state: directory
+    mode: '0755'
+
+- name: Download kubectl binary
+  become: true
+  ansible.builtin.get_url:
+    url: https://dl.k8s.io/release/v1.30.0/bin/linux/amd64/kubectl
+    dest: /usr/local/bin/kubectl
+    mode: '0755'
+    force: yes
+    validate_certs: no
+
+- name: Verify kubectl binary exists
+  become: true
+  ansible.builtin.stat:
+    path: /usr/local/bin/kubectl
+  register: kubectl_binary
+
+- name: Display confirmation
+  ansible.builtin.debug:
+    msg: "kubectl installed successfully at /usr/local/bin"
+  when: kubectl_binary.stat.exists
+

@@ -1,0 +1,53 @@
+---
+- name: Install Java (required for Jenkins)
+  become: true
+  ansible.builtin.package:
+    name: java-11-openjdk
+    state: present
+
+- name: Add Jenkins repository
+  become: true
+  ansible.builtin.get_url:
+    url: https://pkg.jenkins.io/redhat-stable/jenkins.repo
+    dest: /etc/yum.repos.d/jenkins.repo
+    mode: '0644'
+
+- name: Import Jenkins GPG key
+  become: true
+  ansible.builtin.rpm_key:
+    key: https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+    state: present
+
+- name: Install Jenkins
+  become: true
+  ansible.builtin.package:
+    name: jenkins
+    state: present
+
+- name: Open firewall for Jenkins
+  become: true
+  ansible.builtin.firewalld:
+    service: jenkins
+    permanent: true
+    state: enabled
+  ignore_errors: true
+
+- name: Reload firewalld
+  become: true
+  ansible.builtin.command: firewall-cmd --reload
+  ignore_errors: true
+
+- name: Enable and start Jenkins
+  become: true
+  ansible.builtin.systemd:
+    name: jenkins
+    state: started
+    enabled: true
+
+- name: Wait for Jenkins to be available on port 8080
+  become: true
+  ansible.builtin.wait_for:
+    port: 8080
+    delay: 10
+    timeout: 60
+
